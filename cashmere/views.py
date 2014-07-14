@@ -2,7 +2,7 @@ import csv
 import datetime
 import decimal
 
-from django.core.urlresolvers import reverse_lazy, reverse
+from django.core.urlresolvers import reverse
 from django.db.models import Sum
 from django.utils.timezone import now
 from django.views.generic import ListView, TemplateView, CreateView, DetailView
@@ -125,7 +125,6 @@ class DashboardView(TemplateView):
 class CreateTransactionView(CreateView):
     model = models.Transaction
     form_class = forms.CreateTransactionForm
-    success_url = reverse_lazy('ui:dashboard')
 
 
 def split_amount(amount, splits, places=2):

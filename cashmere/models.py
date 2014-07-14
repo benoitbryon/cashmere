@@ -95,6 +95,9 @@ class Transaction(models.Model):
 
     objects = managers.TransactionManager
 
+    def get_absolute_url(self):
+        return reverse('ui:transaction_detail', args=[self.pk])
+
     def balance(self, date=None):
         operations = self.operations.all()
         if date:
