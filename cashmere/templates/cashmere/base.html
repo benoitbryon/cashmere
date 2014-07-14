@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}Cashmere{% endblock %}
+
+{% block body_header %}
+  <nav class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+          <span class="sr-only">Toggle navigation</span>
+        </button>
+        <a class="navbar-brand" href="{% url 'ui:dashboard' %}">Cashmere</a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+          {% if accounts %}
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% trans "Accounts" %} <span class="caret"></span></a>
+              <ul class="dropdown-menu account-list" role="menu">
+                {% for account in accounts %}
+                  {% if account.level < 2 %}
+                    <li class="level-{{ account.level }}"><a href="{% url 'ui:account_detail' account.pk %}">{{ account.slug }}</a></li>
+                  {% endif %}
+                {% endfor %}
+               </ul>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block breadcrumb %}
+  {{ block.super }}
+  <li><a href="{% url 'ui:dashboard' %}"><span class="glyphicon glyphicon-home">&nbsp;</span></a></li>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load floppyforms %}
+
+<form enctype="multipart/form-data" method="POST" action="{% url 'ui:operation_import' %}">
+    {% csrf_token %}
+    {% form form %}
+    <button type="submit">Import</button>
+  </form>
+

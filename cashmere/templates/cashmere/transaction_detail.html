@@ -1,0 +1,71 @@
+{% extends "cashmere/base.html" %}
+{% load floppyforms %}
+
+{% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}Transaction n&deg;{{ object.pk }}{% endblock %}
+{% block content_title %}Transaction n&deg;{{ object.pk }}{% endblock %}
+{% block content_baseline %}{% endblock %}
+
+{% block content %}
+  <article>
+    <h2>Operations</h2>
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Account</th>
+        <th>Description</th>
+        <th>Amount</th>
+        <th></th>
+      </tr>
+      {% for operation in operations %}
+        <form method="POST" action="{% url 'ui:operation_edit' operation.pk %}">
+          <tr id="operation_{{ operation.pk }}">
+            <td>{{ operation.pk }}</td>
+            <td>{% widget operation.edit_form.date %}</td>
+            <td><a href="{{ operation.account.get_absolute_url }}">{{ operation.account }}</a></td>
+            <td>{% widget operation.edit_form.description %}</td>
+            <td>{% widget operation.edit_form.amount %}</td>
+            <td>
+              {% csrf_token %}
+              <button type="submit">Update</button>
+              <button type="button" onClick="Javascript:operation_delete({{ operation.pk }});">Delete</button>
+            </td>
+          </tr>
+        </form>
+      {% endfor %}
+      <tr>
+        <td colspan="4"></td>
+        <td class="{% if object.total_balance != 0 %}unbalanced{% endif %}">{{ object.total_balance }}</td>
+        <td></td>
+      </tr>
+    </table>
+  </article>
+
+  <article>
+    <h2>Add an operation</h2>
+    <form method="POST" action="{% url 'ui:operation_create' object.pk %}">
+      {% csrf_token %}
+      {% form create_operation_form %}
+      <button type="submit">Create operation</button>
+    </form>
+  </article>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script type="text/javascript">
+    function operation_delete(pk) {
+      $.ajax({
+        url: '/api/operations/' + pk + '/',
+        type: 'DELETE',
+        success: function () {
+          $('#operation_' + pk).remove();
+        }
+      });
+    }
+
+    $( document ).ready(function() {
+      
+    });
+  </script>
+{% endblock %}

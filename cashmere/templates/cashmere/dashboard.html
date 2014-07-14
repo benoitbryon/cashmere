@@ -1,0 +1,114 @@
+{% extends "cashmere/base.html" %}
+{% load i18n floppyforms %}
+
+{% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}{% trans "Cashmere" %}{% endblock %}
+{% block content_title %}{% trans "Cashmere" %}{% endblock %}
+{% block content_baseline %}{% trans "Manage your money." %}{% endblock %}
+
+{% block content %}
+  <article id="create_transaction">
+    <h2>{% trans "Input new transaction" %}</h2>
+    <form action="{% url 'transaction_create' %}" method="POST">
+      {% csrf_token %}
+      {% form create_transaction_form %} 
+      <button type="submit">{% trans "Create transaction" %}</button>
+    </form>
+  </article>
+
+  <h2>{% trans "Latest operations" %}</h2>
+  <table>
+    <tr>
+      <th>Date</th>
+      <th>Account</th>
+      <th>Transaction</th>
+      <th>Description</th>
+      <th>Amount</th>
+    </tr>
+    {% for operation in latest_operations %}
+      <tr>
+        <td>{{ operation.date }}</td>
+        <td>
+          <a href="{{ operation.account.get_absolute_url }}">
+            {{ operation.account }}
+          </a>
+        </td>
+        <td>
+          <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}">
+            {{ operation.transaction.pk }}
+          </a>
+        </td>
+        <td>{{ operation.description }}</td>
+        <td>{{ operation.amount }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+
+  <h2>{% trans "Unbalanced transactions" %}</h2>
+  <table>
+    <tr>
+      <th>Transaction</th>
+      <th>Balance</th>
+      <th>Date</th>
+      <th>Account</th>
+      <th>Description</th>
+      <th>Amount</th>
+    </tr>
+    {% for transaction in unbalanced_transactions %}
+      <tr>
+        <td rowspan="{{ transaction.operations.count }}">
+          <a href="{% url 'ui:transaction_detail' transaction.pk %}">
+            {{ transaction.pk }}
+          </a>
+        </td>
+        <td rowspan="{{ transaction.operations.count }}">
+            <strong>{{ transaction.total_balance }}</strong>
+        </td>
+    {% for operation in transaction.operations.all %}
+      {% if not forloop.first %}
+        <tr>
+      {% endif %}
+        <td>{{ operation.date }}</td>
+        <td>
+          <a href="{{ operation.account.get_absolute_url }}">
+            {{ operation.account }}
+          </a>
+        </td>
+        <td>{{ operation.description }}</td>
+        <td>{{ operation.amount }}</td>
+      </tr>
+    {% endfor %}
+    {% endfor %}
+  </table>
+
+  <h2>{% trans "Accounts" %}</h2>
+  <table>
+    <tr>
+      <th>Account</th>
+      <th>Last month</th>
+      <th>Today</th>
+      <th>This month</th>
+      <th>Next month</th>
+      <th>Monthly (1)</th>
+      <th>Monthly (3)</th>
+      <th>Monthly (6)</th>
+      <th>Monthly (12)</th>
+    </tr>
+    {% for account in account_list %}
+      <tr>
+        <td style="padding-left: {{ account.level }}0px;">
+          <a href="{{ account.get_absolute_url }}">
+            {{ account.slug }}
+          </a>
+        </td>
+        <td>{{ account.last_month_balance }}</td>
+        <td><strong>{{ account.balance }}</strong></td>
+        <td>{{ account.month_balance }}</td>
+        <td>{{ account.next_month_balance }}</td>
+        <td>{{ account.monthly_amount.1 }}</td>
+        <td>{{ account.monthly_amount.3 }}</td>
+        <td>{{ account.monthly_amount.6 }}</td>
+        <td>{{ account.monthly_amount.12 }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

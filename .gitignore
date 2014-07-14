@@ -1,0 +1,12 @@
+# Data.
+/var/
+
+# Python files.
+*.egg-info
+*.pyc
+*.pyo
+
+# Static toolkit and builds.
+/bower_components/
+/node_modules/
+/public/

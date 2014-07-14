@@ -1,0 +1,7 @@
+#######
+Install
+#######
+
+At the moment, `cashmere` is just a prototype... there is no support for a
+"rock-solid" standard installation. You may install and configure it as a
+Django project.

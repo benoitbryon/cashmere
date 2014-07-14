@@ -1,0 +1,246 @@
+import csv
+import datetime
+import decimal
+
+from django.core.urlresolvers import reverse_lazy, reverse
+from django.db.models import Sum
+from django.utils.timezone import now
+from django.views.generic import ListView, TemplateView, CreateView, DetailView
+from django.views.generic import FormView, UpdateView
+
+from dateutil.relativedelta import relativedelta
+from rest_framework import viewsets
+
+from cashmere import forms
+from cashmere import models
+from cashmere import serializers
+
+
+class AccountViewSet(viewsets.ModelViewSet):
+    queryset = models.Account.objects.all()
+    serializer_class = serializers.AccountSerializer
+
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    queryset = models.Transaction.objects.all()
+    serializer_class = serializers.TransactionSerializer
+
+
+class OperationViewSet(viewsets.ModelViewSet):
+    queryset = models.Operation.objects.all()
+    serializer_class = serializers.OperationSerializer
+
+
+class AccountListView(ListView):
+    model = models.Account
+
+
+class AccountDetailView(DetailView):
+    model = models.Account
+
+    def get_context_data(self, **kwargs):
+        data = DetailView.get_context_data(self, **kwargs)
+        data['operations'] = \
+            models.Operation.objects \
+                            .filter(account__lft__gte=self.object.lft,
+                                    account__rght__lte=self.object.rght,
+                                    account__tree_id=self.object.tree_id) \
+                            .select_related('transaction')
+        data['import_operations_form'] = forms.ImportOperationsForm(
+            initial={'account': self.object.pk})
+        return data
+
+
+class TransactionDetailView(DetailView):
+    model = models.Transaction
+    template_name = 'cashmere/transaction_detail.html'
+
+    def get_context_data(self, **kwargs):
+        data = DetailView.get_context_data(self, **kwargs)
+        data['operations'] = self.object.operations.all()
+        for operation in data['operations']:
+            operation.edit_form = forms.EditOperationForm(instance=operation)
+        data['create_operation_form'] = forms.CreateOperationForm(
+            initial={'transaction': self.object.pk})
+        return data
+
+
+def delete_empty_transactions():
+    """Clean database by deleting transactions with no operations."""
+    models.Transaction.objects \
+                      .filter(operations__pk__isnull=True) \
+                      .filter(total_balance=0) \
+                      .delete()
+
+
+def populate_monthly_amounts(accounts):
+    """Assign ``monthly_amount`` attribute to ``accounts`` queryset."""
+    for account in accounts:
+        account.monthly_amount = {}
+        for delta in [1, 3, 6, 12]:
+            date_floor = now() - relativedelta(months=delta)
+            date_floor = datetime.date(
+                year=date_floor.year,
+                month=date_floor.month,
+                day=1)
+            date_ceil = now() + relativedelta(months=1)
+            date_ceil = datetime.date(
+                year=date_ceil.year,
+                month=date_ceil.month,
+                day=1)
+            amount = models.Operation.objects \
+                .filter(account__lft__gte=account.lft,
+                        account__rght__lte=account.rght,
+                        account__tree_id=account.tree_id) \
+                .filter(
+                    date__gte=date_floor,
+                    date__lt=date_ceil) \
+                .aggregate(balance=Sum('amount')) \
+                .values()[0]
+            if amount is None:
+                average = decimal.Decimal('0.00')
+            else:
+                average = amount / delta
+                average = average.quantize(decimal.Decimal('0.01'))
+            account.monthly_amount[delta] = average
+
+
+class DashboardView(TemplateView):
+    template_name = 'cashmere/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        delete_empty_transactions()  # Maintenance.
+        data = TemplateView.get_context_data(self, **kwargs)
+        data['create_transaction_form'] = forms.CreateTransactionForm(
+            initial={'date': now()})
+        data['account_list'] = models.Account.objects.all()
+        populate_monthly_amounts(data['account_list'])
+        data['latest_operations'] = models.Operation.objects.all()[0:10]
+        data['unbalanced_transactions'] = \
+            models.Transaction.objects.unbalanced()[0:10]
+        data['accounts'] = data['account_list']
+        return data
+
+
+class CreateTransactionView(CreateView):
+    model = models.Transaction
+    form_class = forms.CreateTransactionForm
+    success_url = reverse_lazy('ui:dashboard')
+
+
+def split_amount(amount, splits, places=2):
+    """Return list of ``splits`` amounts where sum of items equals ``amount``.
+
+    >>> from decimal import Decimal
+    >>> split_amount(Decimal('12'), 1)
+    Decimal('12.00')
+    >>> split_amount(Decimal('12'), 2)
+    [Decimal('6.00'), Decimal('6.00')]
+
+    Amounts have a max of ``places`` decimal places. Last amount in the list
+    may not be the same as others (will always be lower than or equal to
+    others).
+
+    >>> split_amount(Decimal('100'), 3)
+    [Decimal('33,34'), Decimal('33,34'), Decimal('33,32')]
+    >>> split_amount(Decimal('100'), 3, 4)
+    [Decimal('33,3334'), Decimal('33,3334'), Decimal('33,3332')]
+    >>> split_amount(Decimal('12'), 7)  # Doctest: +ELLIPSIS
+    [Decimal('1.72'), ..., Decimal('1.72'), ..., Decimal('1.68')]
+    >>> split_amount(Decimal('12'), 17)  # Doctest: +ELLIPSIS
+    [Decimal('0.71'), ..., Decimal('0.71'), Decimal('0.64')]
+
+    """
+    one = decimal.Decimal(10) ** -places
+    amount = amount.quantize(one)
+    with decimal.localcontext() as decimal_context:
+        decimal_context.rounding = decimal.ROUND_UP
+        upper_split = (amount / splits).quantize(one)
+    splitted_amounts = [upper_split] * (splits - 1)
+    lower_split = amount - sum(splitted_amounts)
+    splitted_amounts.append(lower_split)
+    return splitted_amounts
+
+
+class CreateOperationView(FormView):
+    model = models.Operation
+    form_class = forms.CreateOperationForm
+
+    def form_valid(self, form):
+        """Create operation with optional splits."""
+        self.form = form
+        date = form.cleaned_data['date']
+        if form.cleaned_data['splits'] == 1:
+            models.Operation.objects.create(
+                account=form.cleaned_data['account'],
+                transaction=form.cleaned_data['transaction'],
+                date=date,
+                amount=form.cleaned_data['amount'],
+                description=form.cleaned_data['description'],
+            )
+        else:
+            splits = split_amount(
+                form.cleaned_data['amount'],
+                form.cleaned_data['splits'])
+            for position, amount in enumerate(splits):
+                description = u'{desc} ({total}/{splits}, part {pos})'.format(
+                    desc=form.cleaned_data['description'],
+                    pos=position + 1,
+                    splits=form.cleaned_data['splits'],
+                    total=form.cleaned_data['amount'])
+                models.Operation.objects.create(
+                    account=form.cleaned_data['account'],
+                    transaction=form.cleaned_data['transaction'],
+                    date=date + relativedelta(months=position),
+                    amount=amount,
+                    description=description,
+                )
+        return FormView.form_valid(self, form)
+
+    def get_success_url(self):
+        return reverse('ui:transaction_detail',
+                       args=[self.form.cleaned_data['transaction'].pk])
+
+
+class EditOperationView(UpdateView):
+    model = models.Operation
+    form_class = forms.EditOperationForm
+
+    def form_valid(self, form):
+        self.form = form
+        return super(EditOperationView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('ui:transaction_detail',
+                       args=[self.form.instance.transaction.pk])
+
+
+class ImportOperationsView(FormView):
+    form_class = forms.ImportOperationsForm
+    template_name = 'cashmere/operation_import.html'
+
+    def form_valid(self, form):
+        account = form.cleaned_data['account']
+        csv_reader = csv.reader(form.cleaned_data['operations'])
+        with_headers = True
+        columns = ['date', 'description', 'amount']
+        if with_headers:
+            csv_reader.next()
+        for line in csv_reader:
+            data = dict([
+                (field, line[position])
+                for position, field in enumerate(columns)
+                if field is not None
+            ])
+            data['account'] = account.pk
+            data['transaction'] = models.Transaction.objects.create().pk
+            operation_form = forms.CreateOperationForm(data=data)
+            if operation_form.is_valid():
+                operation_form.save()
+        self.form = form
+        return super(ImportOperationsView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            'ui:account_detail',
+            args=[self.form.cleaned_data['account'].pk])

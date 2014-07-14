@@ -1,0 +1,8 @@
+{% for account in object_list %}
+  <article>
+    {% if account.level == 0 %}<h2>{% elif account.level == 1 %}<h3>{% else %}<h4>{% endif %}
+      {{ account.slug }}
+    {% if account.level == 0 %}</h2>{% elif account.level == 1 %}</h3>{% else %}</h4>{% endif %}
+    <a href="{% url 'operation_list' account.pk %}">Operations</a>
+  </article>
+{% endfor %}
