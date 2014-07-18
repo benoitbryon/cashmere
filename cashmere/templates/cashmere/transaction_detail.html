@@ -1,11 +1,16 @@
 {% extends "cashmere/base.html" %}
-{% load floppyforms %}
+{% load floppyforms i18n %}
 
 {% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}Transaction n&deg;{{ object.pk }}{% endblock %}
 {% block content_title %}Transaction n&deg;{{ object.pk }}{% endblock %}
 {% block content_baseline %}{% endblock %}
 
 {% block content %}
+  <form method="POST" action="{% url 'ui:cart' %}">
+    {% csrf_token %}
+    <input name="items" type="hidden" value="{{ object.pk }}" />
+    <button type="submit">{% trans "Add to cart" %}</button>
+  </form>
   <article>
     <h2>Operations</h2>
     <table>

@@ -6,6 +6,13 @@ from django.utils.translation import ugettext_lazy as _
 from cashmere import models
 
 
+class CartForm(forms.Form):
+    items = forms.ModelMultipleChoiceField(
+        label=_('items'),
+        queryset=models.Transaction.objects,
+    )
+
+
 class CreateTransactionForm(forms.ModelForm):
     date = forms.DateField(
         label=_('date'),

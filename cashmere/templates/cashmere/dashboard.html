@@ -15,6 +15,61 @@
     </form>
   </article>
 
+  <h2>{% trans "Cart" %}</h2>
+  {% if cart.items %}
+    <a href="{% url 'ui:cart_empty' %}">Empty cart</a>
+    | 
+    <a href="{% url 'ui:transaction_merge' %}">Merge transactions</a>
+    <table>
+      <tr>
+        <th></th>
+        <th>Transaction</th>
+        <th>Balance</th>
+        <th>Date</th>
+        <th>Account</th>
+        <th>Description</th>
+        <th>Amount</th>
+        <th></th>
+      </tr>
+      {% for transaction in cart.items %}
+        <tr>
+          <td rowspan="{{ transaction.operations.count }}">
+            <form>
+              {% csrf_token %}
+              <input type="checkbox" value="">
+            </form>
+          </td>
+          <td rowspan="{{ transaction.operations.count }}">
+            <a href="{% url 'ui:transaction_detail' transaction.pk %}">
+              {{ transaction.pk }}
+            </a>
+          </td>
+          <td rowspan="{{ transaction.operations.count }}">
+            <strong>{{ transaction.total_balance }}</strong>
+          </td>
+      {% for operation in transaction.operations.all %}
+        {% if not forloop.first %}
+          <tr>
+        {% endif %}
+          <td>{{ operation.date }}</td>
+          <td>
+            <a href="{{ operation.account.get_absolute_url }}">
+              {{ operation.account }}
+            </a>
+          </td>
+          <td>{{ operation.description }}</td>
+          <td>{{ operation.amount }}</td>
+          {% if forloop.first %}
+            <td rowspan="{{ transaction.operations.count }}"></td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>{% trans "Your cart is empty." %}</p>
+  {% endif %}
+
   <h2>{% trans "Latest operations" %}</h2>
   <table>
     <tr>

@@ -2,11 +2,11 @@ import csv
 import datetime
 import decimal
 
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.db.models import Sum
 from django.utils.timezone import now
 from django.views.generic import ListView, TemplateView, CreateView, DetailView
-from django.views.generic import FormView, UpdateView
+from django.views.generic import FormView, UpdateView, RedirectView
 
 from dateutil.relativedelta import relativedelta
 from rest_framework import viewsets
@@ -14,6 +14,46 @@ from rest_framework import viewsets
 from cashmere import forms
 from cashmere import models
 from cashmere import serializers
+
+
+class CartView(FormView):
+    form_class = forms.CartForm
+    success_url = reverse_lazy('ui:dashboard')
+    template_name = 'cashmere/cart.html'
+
+    def form_valid(self, form):
+        if 'cart' not in self.request.session:
+            self.request.session['cart'] = []
+        cart = self.request.session['cart']
+        for transaction in form.cleaned_data['items']:
+            if transaction.pk not in cart:
+                cart.append(transaction.pk)
+        self.request.session['cart'] = cart
+        return super(CartView, self).form_valid(form)
+
+
+class TransactionMergeView(RedirectView):
+    """Merge transactions into one."""
+    def get_redirect_url(self):
+        if self.request.session['cart']:
+            new_transaction = models.Transaction.objects.create()
+            transactions = models.Transaction.objects.filter(
+                id__in=self.request.session['cart'])
+            for transaction in transactions:
+                for operation in transaction.operations.all():
+                    operation.transaction = new_transaction
+                    operation.save()
+                transaction.delete()
+            self.request.session['cart'] = []
+            return reverse('ui:transaction_detail', args=[new_transaction.pk])
+        else:
+            return reverse('ui:dashboard')
+
+
+class CartEmptyView(RedirectView):
+    def get_redirect_url(self):
+        self.request.session['cart'] = []
+        return reverse('ui:dashboard')
 
 
 class AccountViewSet(viewsets.ModelViewSet):
@@ -119,6 +159,11 @@ class DashboardView(TemplateView):
         data['unbalanced_transactions'] = \
             models.Transaction.objects.unbalanced()[0:10]
         data['accounts'] = data['account_list']
+        self.request.session.setdefault('cart', [])
+        data['cart'] = {
+            'items': models.Transaction.objects.filter(
+                id__in=self.request.session['cart']),
+        }
         return data
 
 

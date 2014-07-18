@@ -1,0 +1,6 @@
+{% load floppyforms %}
+<form action="." method="POST">
+  {% csrf_token %}
+  {% form form %}
+  <input type="submit" />
+</form>

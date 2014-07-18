@@ -21,6 +21,7 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
+    'django.contrib.sessions',
 )
 ROOT_URLCONF = 'cashmere.urls'
 SECRET_KEY = 'not a secret'

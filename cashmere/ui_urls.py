@@ -10,12 +10,17 @@ transaction_detail = views.TransactionDetailView.as_view()
 operation_create = views.CreateOperationView.as_view()
 operation_import = views.ImportOperationsView.as_view()
 operation_update = views.EditOperationView.as_view()
+cart = views.CartView.as_view()
+cart_empty = views.CartEmptyView.as_view()
+transaction_merge = views.TransactionMergeView.as_view()
 
 
 urlpatterns = patterns(
     '',
     url(r'^$', dashboard, name='dashboard'),
-    url(r'^account/$', account_list, name='account_list'),
+    url(r'^cart/$', cart, name='cart'),
+    url(r'^cart/empty/$', cart_empty, name='cart_empty'),
+    url(r'^transaction/merge/$', transaction_merge, name='transaction_merge'),
     url(r'^account/(?P<pk>[0-9]+)/$',
         account_detail,
         name='account_detail'),
