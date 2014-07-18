@@ -92,6 +92,12 @@ class Transaction(models.Model):
         db_index=True,
         default=decimal.Decimal(0),
         editable=False)
+    #: Status of the transaction. An open transaction may be edited, whereas
+    #: a closed one has been checked and is not subject to edition.
+    is_open = models.BooleanField(
+        _('open'),
+        default=True,
+        db_index=True)
 
     objects = managers.TransactionManager
 

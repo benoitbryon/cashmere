@@ -34,7 +34,7 @@ class CartView(FormView):
 
 class TransactionMergeView(RedirectView):
     """Merge transactions into one."""
-    def get_redirect_url(self):
+    def get_redirect_url(self, **kwargs):
         if self.request.session['cart']:
             new_transaction = models.Transaction.objects.create()
             transactions = models.Transaction.objects.filter(
@@ -48,6 +48,16 @@ class TransactionMergeView(RedirectView):
             return reverse('ui:transaction_detail', args=[new_transaction.pk])
         else:
             return reverse('ui:dashboard')
+
+
+class TransactionToggleStatusView(RedirectView):
+    """Toggle transaction status (open or close)."""
+    def get_redirect_url(self, **kwargs):
+        transaction_id = self.kwargs['transaction']
+        transaction = models.Transaction.objects.get(pk=transaction_id)
+        transaction.is_open = not transaction.is_open
+        transaction.save()
+        return reverse('ui:transaction_detail', args=[transaction.pk])
 
 
 class CartEmptyView(RedirectView):

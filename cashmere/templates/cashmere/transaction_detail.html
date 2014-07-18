@@ -11,6 +11,10 @@
     <input name="items" type="hidden" value="{{ object.pk }}" />
     <button type="submit">{% trans "Add to cart" %}</button>
   </form>
+  <form method="GET" action="{% url 'ui:transaction_status' object.pk %}">
+      <button type="submit">{% if object.is_open %}{% trans "Close" %}{% else %}{% trans "Open" %}{% endif %}</button>
+  </form>
+
   <article>
     <h2>Operations</h2>
     <table>

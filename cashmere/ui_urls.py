@@ -13,6 +13,7 @@ operation_update = views.EditOperationView.as_view()
 cart = views.CartView.as_view()
 cart_empty = views.CartEmptyView.as_view()
 transaction_merge = views.TransactionMergeView.as_view()
+transaction_status = views.TransactionToggleStatusView.as_view()
 
 
 urlpatterns = patterns(
@@ -21,6 +22,9 @@ urlpatterns = patterns(
     url(r'^cart/$', cart, name='cart'),
     url(r'^cart/empty/$', cart_empty, name='cart_empty'),
     url(r'^transaction/merge/$', transaction_merge, name='transaction_merge'),
+    url(r'^account/$',
+        account_detail,
+        name='account_list'),
     url(r'^account/(?P<pk>[0-9]+)/$',
         account_detail,
         name='account_detail'),
@@ -36,4 +40,7 @@ urlpatterns = patterns(
     url(r'^transaction/(?P<transaction>[0-9]+)/add/$',
         operation_create,
         name='operation_create'),
+    url(r'^transaction/(?P<transaction>[0-9]+)/status/$',
+        transaction_status,
+        name='transaction_status'),
 )
