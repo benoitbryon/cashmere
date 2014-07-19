@@ -30,6 +30,7 @@ KEYWORDS = [
 PACKAGES = [NAME.replace('-', '_')]
 REQUIREMENTS = [
     'Django',
+    'django-cors-headers',
     'django-floppyforms',
     'django-mptt',
     'django-qmixin',

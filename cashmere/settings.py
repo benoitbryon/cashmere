@@ -1,5 +1,10 @@
 import os
 
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_WHITELIST = (
+    'localhost',
+)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -13,6 +18,7 @@ DATABASES = {
 DEBUG = True
 INSTALLED_APPS = (
     'cashmere',
+    'corsheaders',
     'floppyforms',
     'mptt',
     'rest_framework',
@@ -23,6 +29,15 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sessions',
 )
+MIDDLEWARE_CLASSES = [
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 ROOT_URLCONF = 'cashmere.urls'
 SECRET_KEY = 'not a secret'
 STATIC_URL = 'http://localhost:8001/'
