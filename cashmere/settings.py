@@ -20,6 +20,7 @@ INSTALLED_APPS = (
     'cashmere',
     'corsheaders',
     'floppyforms',
+    'django_genericfilters',
     'mptt',
     'rest_framework',
     'south',

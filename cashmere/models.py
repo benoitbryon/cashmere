@@ -142,6 +142,10 @@ class Operation(models.Model):
     def is_credit(self):
         return self.amount >= 0
 
+    @property
+    def is_future(self):
+        return self.date > now().date()
+
 
 def update_transaction_balance(sender, **kwargs):
     operation = kwargs['instance']

@@ -32,6 +32,7 @@ REQUIREMENTS = [
     'Django',
     'django-cors-headers',
     'django-floppyforms',
+    'django-generic-filters',
     'django-mptt',
     'django-qmixin',
     'djangorestframework',

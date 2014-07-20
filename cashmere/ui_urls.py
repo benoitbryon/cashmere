@@ -10,6 +10,7 @@ transaction_detail = views.TransactionDetailView.as_view()
 operation_create = views.CreateOperationView.as_view()
 operation_import = views.ImportOperationsView.as_view()
 operation_update = views.EditOperationView.as_view()
+operation_list = views.OperationListView.as_view()
 cart = views.CartView.as_view()
 cart_empty = views.CartEmptyView.as_view()
 transaction_merge = views.TransactionMergeView.as_view()
@@ -28,6 +29,9 @@ urlpatterns = patterns(
     url(r'^account/(?P<pk>[0-9]+)/$',
         account_detail,
         name='account_detail'),
+    url(r'^operation/$',
+        operation_list,
+        name='operation_list'),
     url(r'^operation/import/$',
         operation_import,
         name='operation_import'),

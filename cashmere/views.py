@@ -9,11 +9,47 @@ from django.views.generic import ListView, TemplateView, CreateView, DetailView
 from django.views.generic import FormView, UpdateView, RedirectView
 
 from dateutil.relativedelta import relativedelta
+from django_genericfilters.views import FilteredListView
 from rest_framework import viewsets
 
 from cashmere import forms
 from cashmere import models
 from cashmere import serializers
+
+
+class OperationListView(FilteredListView):
+    """List of operations, whatever the transaction."""
+    model = models.Operation
+    form_class = forms.OperationSearchForm
+
+    def form_valid(self, form):
+        queryset = super(OperationListView, self).form_valid(form)
+        if form.cleaned_data['account']:
+            account = form.cleaned_data['account']
+            queryset = queryset.filter(
+                account__lft__gte=account.lft,
+                account__rght__lte=account.rght,
+                account__tree_id=account.tree_id)
+        if form.cleaned_data['date_floor']:
+            queryset = queryset.filter(
+                date__gte=form.cleaned_data['date_floor'])
+        if form.cleaned_data['date_ceil']:
+            queryset = queryset.filter(
+                date__lte=form.cleaned_data['date_ceil'])
+        if form.cleaned_data['amount_floor']:
+            queryset = queryset.filter(
+                amount__gte=form.cleaned_data['amount_floor'])
+        if form.cleaned_data['amount_ceil']:
+            queryset = queryset.filter(
+                amount__lte=form.cleaned_data['amount_ceil'])
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        data = super(OperationListView, self).get_context_data(**kwargs)
+        data['balance'] = data['object_list'] \
+            .aggregate(balance=Sum('amount')) \
+            .values()[0]
+        return data
 
 
 class CartView(FormView):
@@ -165,7 +201,13 @@ class DashboardView(TemplateView):
             initial={'date': now()})
         data['account_list'] = models.Account.objects.all()
         populate_monthly_amounts(data['account_list'])
-        data['latest_operations'] = models.Operation.objects.all()[0:10]
+        # Recent operations: N latest operations from now.
+        data['recent_operations'] = models.Operation.objects \
+            .filter(date__lte=now())[0:5]
+        # Next operations: N next operations from now.
+        data['next_operations'] = models.Operation.objects \
+            .filter(date__gt=now())[0:5]
+        # Unbalanced transactions.
         data['unbalanced_transactions'] = \
             models.Transaction.objects.unbalanced()[0:10]
         data['accounts'] = data['account_list']

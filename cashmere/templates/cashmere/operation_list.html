@@ -1,0 +1,55 @@
+{% extends "cashmere/base.html" %}
+{% load floppyforms i18n %}
+
+{% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}{% trans "Operations" %}{% endblock %}
+{% block content_title %}{% trans "Operations" %}{% endblock %}
+{% block content_baseline %}{% endblock %}
+
+{% block content %}
+  <form method="GET" action="{% url 'ui:operation_list' %}">
+    {% form form %} 
+    <button type="submit">{% trans "Filter" %}</button>
+  </form>
+  <form id="cart_form" method="POST" action="{% url 'ui:cart' %}">
+    {% csrf_token %}
+    <input id="cart_form_items" name="items" type="hidden" value="{{ operation.transaction.pk }}" />
+  </form>
+
+  {% if object_list %}
+    <dl>
+      <dt>{% trans "Operations" %}</dt>
+      <dd>{{ object_list|length }}</dd>
+      <dt>{% trans "Balance" %}</dt>
+      <dd>{{ balance|stringformat:".2f" }}</dd>
+    </dl>
+    <table>
+      <tr>
+        <th class="date">Date</th>
+        <th class="account">Account</th>
+        <th class="description">Description</th>
+        <th class="amount">Amount</th>
+        <th class="actions"></th>
+      </tr>
+      {% for operation in object_list %}
+      <tr class="{% if operation.is_future %}future{% endif %}">
+          <td class="date">{{ operation.date|date:"d/m/Y" }}</td>
+          <td class="account">
+            <a href="{{ operation.account.get_absolute_url }}" title="{{ operation.account }}">
+              {{ operation.account.slug }}
+            </a>
+          </td>
+          <td class="description">{{ operation.description }}</td>
+          <td class="amount">{{ operation.amount|stringformat:".2f" }}</td>
+          <td class="actions">
+            <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}" class="btn btn-xs btn-primary" title="{{ operation.transaction.pk }}">
+              <span class="glyphicon glyphicon-pencil"> </span>
+            </a>
+            <button type="button" class="btn btn-xs btn-default" onClick="$('#cart_form_items').val('{{ operation.transaction.pk }}');$('#cart_form').submit();"><span class="glyphicon glyphicon-shopping-cart"> </span></button>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>{% trans "No operations matching filters." %}</p>
+  {% endif %}
+{% endblock %}

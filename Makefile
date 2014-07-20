@@ -45,9 +45,19 @@ public: bower
 	$(GRUNT) copy less uglify
 
 
-#: serve - Serve public/ folder on localhost:8001
+#: serve - Run all servers
 serve:
 	$(CIRCUS) circus.ini
+
+
+#: serve-static - Run static files service.
+serve-static:
+	node_modules/.bin/ws -d public/ --port 8001
+
+
+#: serve-ui - Run UI service.
+serve-ui:
+	cashmere runserver
 
 
 #: clean - Basic cleanup, mostly temporary files.

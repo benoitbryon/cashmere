@@ -9,7 +9,23 @@
 TABLE {
   .table;
   .table-hover;
+  .table-striped;
   .table-condensed;
+  .table-bordered;
+}
+
+FORM {
+  .form-inline();
+  .form-group {
+    INPUT, SELECT {
+      .form-control();
+    }
+  }
+}
+
+BUTTON {
+  .btn();
+  .btn-default();
 }
 
 .account-list {
@@ -31,5 +47,26 @@ TABLE {
 }
 
 BODY#ui__dashboard {
-  
+  #create_transaction {
+    BUTTON {
+      .btn-primary();
+    }
+  }
+
+  #recent_operations,
+  #next_operations,
+  #unbalanced_transactions {
+    .make-lg-column(6);
+    TABLE {
+      TH {
+        text-align: center;
+      }
+      TD.transaction {
+        text-align: right;
+      }
+      TD.amount {
+        text-align: right;
+      }
+    }
+  }
 }

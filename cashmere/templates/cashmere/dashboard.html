@@ -6,11 +6,16 @@
 {% block content_baseline %}{% trans "Manage your money." %}{% endblock %}
 
 {% block content %}
+  <form id="cart_form" method="POST" action="{% url 'ui:cart' %}">
+    {% csrf_token %}
+    <input id="cart_form_items" name="items" type="hidden" value="{{ operation.transaction.pk }}" />
+  </form>
+
   <article id="create_transaction">
     <h2>{% trans "Input new transaction" %}</h2>
     <form action="{% url 'transaction_create' %}" method="POST">
       {% csrf_token %}
-      {% form create_transaction_form %} 
+      {% form create_transaction_form using "floppyforms/layouts/bootstrap.html" %} 
       <button type="submit">{% trans "Create transaction" %}</button>
     </form>
   </article>
@@ -70,33 +75,70 @@
     <p>{% trans "Your cart is empty." %}</p>
   {% endif %}
 
-  <h2>{% trans "Latest operations" %}</h2>
-  <table>
-    <tr>
-      <th>Date</th>
-      <th>Account</th>
-      <th>Transaction</th>
-      <th>Description</th>
-      <th>Amount</th>
-    </tr>
-    {% for operation in latest_operations %}
+  <article id="recent_operations">
+    <h2>{% trans "Recent operations" %}</h2>
+    <table>
       <tr>
-        <td>{{ operation.date }}</td>
-        <td>
-          <a href="{{ operation.account.get_absolute_url }}">
-            {{ operation.account }}
-          </a>
-        </td>
-        <td>
-          <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}">
-            {{ operation.transaction.pk }}
-          </a>
-        </td>
-        <td>{{ operation.description }}</td>
-        <td>{{ operation.amount }}</td>
+        <th class="date">Date</th>
+        <th class="account">Account</th>
+        <th class="description">Description</th>
+        <th class="amount">Amount</th>
+        <th class="actions"></th>
       </tr>
-    {% endfor %}
-  </table>
+      {% for operation in recent_operations %}
+      <tr class="{% if operation.is_future %}future{% endif %}">
+          <td class="date">{{ operation.date|date:"d/m/Y" }}</td>
+          <td class="account">
+            <a href="{{ operation.account.get_absolute_url }}" title="{{ operation.account }}">
+              {{ operation.account.slug }}
+            </a>
+          </td>
+          <td class="description">{{ operation.description }}</td>
+          <td class="amount">{{ operation.amount|stringformat:".2f" }}</td>
+          <td class="actions">
+            <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}" class="btn btn-xs btn-primary" title="{{ operation.transaction.pk }}">
+              <span class="glyphicon glyphicon-pencil"> </span>
+            </a>
+            <button type="button" class="btn btn-xs btn-default" onClick="$('#cart_form_items').val('{{ operation.transaction.pk }}');$('#cart_form').submit();"><span class="glyphicon glyphicon-shopping-cart"> </span></button>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'ui:operation_list' %}?date_ceil={% now 'd/m/Y' %}&order_by=date&order_reverse=1">{% trans "View all past operations" %}</a>
+  </article>
+
+  <article id="next_operations">
+    <h2>{% trans "Next operations" %}</h2>
+    <table>
+      <tr>
+        <th class="date">Date</th>
+        <th class="account">Account</th>
+        <th class="description">Description</th>
+        <th class="amount">Amount</th>
+        <th class="actions"></th>
+      </tr>
+      {% for operation in recent_operations %}
+      <tr class="{% if operation.is_future %}future{% endif %}">
+          <td class="date">{{ operation.date|date:"d/m/Y" }}</td>
+          <td class="account">
+            <a href="{{ operation.account.get_absolute_url }}" title="{{ operation.account }}">
+              {{ operation.account.slug }}
+            </a>
+          </td>
+          <td class="description">{{ operation.description }}</td>
+          <td class="amount">{{ operation.amount|stringformat:".2f" }}</td>
+          <td class="actions">
+            <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}" class="btn btn-xs btn-primary" title="{{ operation.transaction.pk }}">
+              <span class="glyphicon glyphicon-pencil"> </span>
+            </a>
+            <button type="button" class="btn btn-xs btn-default" onClick="$('#cart_form_items').val('{{ operation.transaction.pk }}');$('#cart_form').submit();"><span class="glyphicon glyphicon-shopping-cart"> </span></button>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+    <a href="{% url 'ui:operation_list' %}?date_floor={% now 'd/m/Y' %}&order_by=date&order_reverse=0">{% trans "View all future operations" %}</a>
+  </article>
+
 
   <h2>{% trans "Unbalanced transactions" %}</h2>
   <table>
