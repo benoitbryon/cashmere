@@ -60,6 +60,7 @@
       <th>Transaction</th>
       <th>Description</th>
       <th>Amount</th>
+      <th></th>
     </tr>
     {% for operation in operations %}
       <tr>
@@ -69,9 +70,15 @@
           <a href="{% url 'ui:transaction_detail' operation.transaction.pk %}">
             {{ operation.transaction.pk }}
           </a>
+          {% if operation.transaction.is_open %}
+          {% else %}
+            <span class="glyphicon glyphicon-ok"> </span>
+          {% endif %}
         </td>
         <td>{{ operation.description }}</td>
         <td>{{ operation.amount }}</td>
+        <td class="actions">
+        </td>
       </tr>
     {% endfor %}
   </table>
