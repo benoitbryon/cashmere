@@ -51,6 +51,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "django.core.context_processors.static",
     "django.core.context_processors.tz",
     "django.contrib.messages.context_processors.messages",
+    'cashmere.contextprocessors.accounts',
 ]
 USE_L10N = True
 USE_I18N = True

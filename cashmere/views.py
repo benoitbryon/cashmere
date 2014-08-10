@@ -212,7 +212,6 @@ class DashboardView(TemplateView):
         # Unbalanced transactions.
         data['unbalanced_transactions'] = \
             models.Transaction.objects.unbalanced()[0:10]
-        data['accounts'] = data['account_list']
         self.request.session.setdefault('cart', [])
         data['cart'] = {
             'items': models.Transaction.objects.filter(
