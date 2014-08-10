@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}Cashmere{% endblock %}
 
@@ -49,4 +49,9 @@
 {% block breadcrumb %}
   {{ block.super }}
   <li><a href="{% url 'ui:dashboard' %}"><span class="glyphicon glyphicon-home">&nbsp;</span></a></li>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script src="{% static 'js/cashmere.min.js' %}" type="text/javascript"></script>
 {% endblock %}

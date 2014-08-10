@@ -12,7 +12,7 @@
     <button type="submit">{% trans "Add to cart" %}</button>
   </form>
   <form method="GET" action="{% url 'ui:transaction_status' object.pk %}">
-      <button type="submit">{% if object.is_open %}{% trans "Close" %}{% else %}{% trans "Open" %}{% endif %}</button>
+    <button type="submit">{% if object.is_open %}{% trans "Close" %}{% else %}{% trans "Open" %}{% endif %}</button>
   </form>
 
   <article>
@@ -37,7 +37,7 @@
             <td>
               {% csrf_token %}
               <button type="submit">Update</button>
-              <button type="button" onClick="Javascript:operation_delete({{ operation.pk }});">Delete</button>
+              <button type="button" onClick="Javascript:Cashmere.Operation.delete({{ operation.pk }});">Delete</button>
             </td>
           </tr>
         </form>
@@ -58,23 +58,4 @@
       <button type="submit">Create operation</button>
     </form>
   </article>
-{% endblock %}
-
-{% block javascript %}
-  {{ block.super }}
-  <script type="text/javascript">
-    function operation_delete(pk) {
-      $.ajax({
-        url: '/api/operations/' + pk + '/',
-        type: 'DELETE',
-        success: function () {
-          $('#operation_' + pk).remove();
-        }
-      });
-    }
-
-    $( document ).ready(function() {
-      
-    });
-  </script>
 {% endblock %}

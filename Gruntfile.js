@@ -41,6 +41,9 @@ module.exports = function(grunt) {
           'public/js/libs.min.js': [
             'bower_components/jquery/dist/jquery.js',
             'bower_components/bootstrap/dist/js/bootstrap.js'
+          ],
+          'public/js/cashmere.min.js': [
+            'assets/js/cashmere.js'
           ]
         }
       }
@@ -58,7 +61,7 @@ module.exports = function(grunt) {
         tasks: ['copy:img']
       },
       js: {
-        files: ['assets/js/*.js', 'bower_components/**.js'],
+        files: ['assets/js/**.js', 'bower_components/**.js'],
         tasks: ['uglify']
       }
     }
