@@ -117,7 +117,7 @@
         <th class="amount">Amount</th>
         <th class="actions"></th>
       </tr>
-      {% for operation in recent_operations %}
+      {% for operation in next_operations %}
       <tr class="{% if operation.is_future %}future{% endif %}">
           <td class="date">{{ operation.date|date:"d/m/Y" }}</td>
           <td class="account">

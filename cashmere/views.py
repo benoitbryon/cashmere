@@ -203,10 +203,12 @@ class DashboardView(TemplateView):
         populate_monthly_amounts(data['account_list'])
         # Recent operations: N latest operations from now.
         data['recent_operations'] = models.Operation.objects \
-            .filter(date__lte=now())[0:5]
+            .filter(date__lte=now().date()) \
+            .order_by('-date')[0:5]
         # Next operations: N next operations from now.
         data['next_operations'] = models.Operation.objects \
-            .filter(date__gt=now())[0:5]
+            .filter(date__gt=now().date()) \
+            .order_by('date')[0:5]
         # Unbalanced transactions.
         data['unbalanced_transactions'] = \
             models.Transaction.objects.unbalanced()[0:10]
