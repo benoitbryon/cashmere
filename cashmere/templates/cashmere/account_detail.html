@@ -14,6 +14,40 @@
 {% endblock %}
 
 {% block content %}
+  <h2>{% trans "Graph" %}</h2>
+  <table>
+    <tr>
+      {% for month in month_list %}
+        <th>{{ month.title }}</th>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td style="vertical-align:bottom;height:100px;padding-bottom:0;">
+          {% if month.balance >= 0 %}
+            <div style="background:red;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td style="vertical-align:top;height:100px;padding-top:0;">
+          {% if month.balance < 0 %}
+            <div style="background:blue;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td>
+          {{ month.balance }}
+        </td>
+      {% endfor %}
+    </tr>
+  </table>
+
   <h2>Summary</h2>
   <table>
     <tr>
@@ -61,40 +95,6 @@
         <td>{{ account.monthly_amount.12 }}</td>
       </tr>
     {% endfor %}
-  </table>
-
-  <h2>{% trans "Graph" %}</h2>
-  <table>
-    <tr>
-      {% for month in month_list %}
-        <th>{{ month.title }}</th>
-      {% endfor %}
-    </tr>
-    <tr>
-      {% for month in month_list %}
-        <td style="vertical-align:bottom;height:100px;padding-bottom:0;">
-          {% if month.balance >= 0 %}
-            <div style="background:red;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
-          {% endif %}
-        </td>
-      {% endfor %}
-    </tr>
-    <tr>
-      {% for month in month_list %}
-        <td style="vertical-align:top;height:100px;padding-top:0;">
-          {% if month.balance < 0 %}
-            <div style="background:blue;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
-          {% endif %}
-        </td>
-      {% endfor %}
-    </tr>
-    <tr>
-      {% for month in month_list %}
-        <td>
-          {{ month.balance }}
-        </td>
-      {% endfor %}
-    </tr>
   </table>
 
   <h2>Operations</h2>
