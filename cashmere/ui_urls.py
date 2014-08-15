@@ -24,7 +24,7 @@ urlpatterns = patterns(
     url(r'^cart/empty/$', cart_empty, name='cart_empty'),
     url(r'^transaction/merge/$', transaction_merge, name='transaction_merge'),
     url(r'^account/$',
-        account_detail,
+        account_list,
         name='account_list'),
     url(r'^account/(?P<pk>[0-9]+)/$',
         account_detail,

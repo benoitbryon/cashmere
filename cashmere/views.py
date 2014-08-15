@@ -120,6 +120,11 @@ class OperationViewSet(viewsets.ModelViewSet):
 class AccountListView(ListView):
     model = models.Account
 
+    def get_context_data(self, **kwargs):
+        data = ListView.get_context_data(self, **kwargs)
+        populate_monthly_amounts(data['object_list'])
+        return data
+
 
 class AccountDetailView(DetailView):
     model = models.Account

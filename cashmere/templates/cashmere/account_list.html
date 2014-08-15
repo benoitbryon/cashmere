@@ -1,8 +1,39 @@
-{% for account in object_list %}
-  <article>
-    {% if account.level == 0 %}<h2>{% elif account.level == 1 %}<h3>{% else %}<h4>{% endif %}
-      {{ account.slug }}
-    {% if account.level == 0 %}</h2>{% elif account.level == 1 %}</h3>{% else %}</h4>{% endif %}
-    <a href="{% url 'operation_list' account.pk %}">Operations</a>
-  </article>
-{% endfor %}
+{% extends "cashmere/base.html" %}
+{% load i18n %}
+
+{% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}{% trans "Accounts" %}{% endblock %}
+{% block content_title %}{% trans "Accounts" %}{% endblock %}
+{% block content_baseline %}{% endblock %}
+
+{% block content %}
+  <table>
+    <tr>
+      <th>Account</th>
+      <th>Last month</th>
+      <th>Today</th>
+      <th>This month</th>
+      <th>Next month</th>
+      <th>Monthly (1)</th>
+      <th>Monthly (3)</th>
+      <th>Monthly (6)</th>
+      <th>Monthly (12)</th>
+    </tr>
+    {% for account in object_list %}
+      <tr>
+        <td style="padding-left: {{ account.level }}0px;">
+          <a href="{{ account.get_absolute_url }}">
+            {{ account.slug }}
+          </a>
+        </td>
+        <td>{{ account.last_month_balance }}</td>
+        <td><strong>{{ account.balance }}</strong></td>
+        <td>{{ account.month_balance }}</td>
+        <td>{{ account.next_month_balance }}</td>
+        <td>{{ account.monthly_amount.1 }}</td>
+        <td>{{ account.monthly_amount.3 }}</td>
+        <td>{{ account.monthly_amount.6 }}</td>
+        <td>{{ account.monthly_amount.12 }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
