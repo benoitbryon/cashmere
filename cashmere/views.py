@@ -137,8 +137,56 @@ class AccountDetailView(DetailView):
                                     account__rght__lte=self.object.rght,
                                     account__tree_id=self.object.tree_id) \
                             .select_related('transaction')
+        max_amount = 0
+        for operation in data['operations']:
+            operation.relative_width = abs(int(operation.amount / 10))
+            if operation.relative_width > max_amount:
+                max_amount = operation.relative_width
+        for operation in data['operations']:
+            operation.relative_width = int(
+                operation.relative_width * 100 / max_amount)
+            if operation.relative_width == 0 and abs(operation.amount) >= 1:
+                operation.relative_width = 1
         data['import_operations_form'] = forms.ImportOperationsForm(
             initial={'account': self.object.pk})
+        populate_monthly_amount(data['object'])
+        data['descendants'] = data['object'].get_descendants()
+        populate_monthly_amounts(data['descendants'])
+        month_list = []
+        today = now().date()
+        account = data['object']
+        max_balance = None
+        for month_delta in range(-12, 1):
+            date_floor = today + relativedelta(months=month_delta)
+            date_floor = datetime.date(date_floor.year, date_floor.month, 1)
+            date_ceil = date_floor + relativedelta(months=1)
+            date_ceil = datetime.date(date_ceil.year, date_ceil.month, 1)
+            amount = models.Operation.objects \
+                .filter(account__lft__gte=account.lft,
+                        account__rght__lte=account.rght,
+                        account__tree_id=account.tree_id) \
+                .filter(
+                    date__gte=date_floor,
+                    date__lt=date_ceil) \
+                .aggregate(balance=Sum('amount')) \
+                .values()[0]
+            if amount is None:
+                average = decimal.Decimal('0.00')
+            else:
+                average = amount
+                average = average.quantize(decimal.Decimal('0.01'))
+            month_list.append({
+                'year': date_floor.year,
+                'title': date_floor.strftime('%B %Y'),
+                'balance': average,
+                'relative_balance': 0,
+            })
+            if abs(average) > max_balance:
+                max_balance = abs(average)
+        for month in month_list:
+            month['relative_balance'] = int(
+                abs(month['balance']) * 100 / max_balance)
+        data['month_list'] = month_list
         return data
 
 
@@ -164,36 +212,41 @@ def delete_empty_transactions():
                       .delete()
 
 
+def populate_monthly_amount(account):
+    """Assign ``monthly_amount`` attribute to ``account``."""
+    account.monthly_amount = {}
+    for delta in [1, 3, 6, 12]:
+        date_floor = now() - relativedelta(months=delta)
+        date_floor = datetime.date(
+            year=date_floor.year,
+            month=date_floor.month,
+            day=1)
+        date_ceil = now() + relativedelta(months=1)
+        date_ceil = datetime.date(
+            year=date_ceil.year,
+            month=date_ceil.month,
+            day=1)
+        amount = models.Operation.objects \
+            .filter(account__lft__gte=account.lft,
+                    account__rght__lte=account.rght,
+                    account__tree_id=account.tree_id) \
+            .filter(
+                date__gte=date_floor,
+                date__lt=date_ceil) \
+            .aggregate(balance=Sum('amount')) \
+            .values()[0]
+        if amount is None:
+            average = decimal.Decimal('0.00')
+        else:
+            average = amount / delta
+            average = average.quantize(decimal.Decimal('0.01'))
+        account.monthly_amount[delta] = average
+
+
 def populate_monthly_amounts(accounts):
     """Assign ``monthly_amount`` attribute to ``accounts`` queryset."""
     for account in accounts:
-        account.monthly_amount = {}
-        for delta in [1, 3, 6, 12]:
-            date_floor = now() - relativedelta(months=delta)
-            date_floor = datetime.date(
-                year=date_floor.year,
-                month=date_floor.month,
-                day=1)
-            date_ceil = now() + relativedelta(months=1)
-            date_ceil = datetime.date(
-                year=date_ceil.year,
-                month=date_ceil.month,
-                day=1)
-            amount = models.Operation.objects \
-                .filter(account__lft__gte=account.lft,
-                        account__rght__lte=account.rght,
-                        account__tree_id=account.tree_id) \
-                .filter(
-                    date__gte=date_floor,
-                    date__lt=date_ceil) \
-                .aggregate(balance=Sum('amount')) \
-                .values()[0]
-            if amount is None:
-                average = decimal.Decimal('0.00')
-            else:
-                average = amount / delta
-                average = average.quantize(decimal.Decimal('0.01'))
-            account.monthly_amount[delta] = average
+        populate_monthly_amount(account)
 
 
 class DashboardView(TemplateView):

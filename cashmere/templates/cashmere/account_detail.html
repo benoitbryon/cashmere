@@ -1,5 +1,5 @@
 {% extends "cashmere/base.html" %}
-{% load i18n floppyforms %}
+{% load i18n floppyforms assign %}
 
 {% block head_title %}{% if block.super %}{{ block.super }} &ndash; {% endif %}Account {{ object.slug }}{% endblock %}
 {% block content_title %}Account {{ object.slug }}{% endblock %}
@@ -14,19 +14,7 @@
 {% endblock %}
 
 {% block content %}
-  <h2>{% trans "Balances" %}</h2>
-  <dl>
-    <dt>Today<dt>
-    <dd>{{ account.balance }}</dd>
-    <dt>Current month<dt>
-    <dd>{{ account.month_balance }}</dd>
-    <dt>Last month<dt>
-    <dd>{{ account.last_month_balance }}</dd>
-    <dt>Next month<dt>
-    <dd>{{ account.next_month_balance }}</dd>
-  </dl>
-
-  <h2>Children</h2>
+  <h2>Summary</h2>
   <table>
     <tr>
       <th>Account</th>
@@ -34,24 +22,81 @@
       <th>Today</th>
       <th>This month</th>
       <th>Next month</th>
-      <th></th>
+      <th>Monthly (1)</th>
+      <th>Monthly (3)</th>
+      <th>Monthly (6)</th>
+      <th>Monthly (12)</th>
     </tr>
-    {% for account in object.get_descendants %}
+    {% with object as account %}
       <tr>
         <td style="padding-left: {{ account.level }}0px;">
-          <a href="{{ account.get_absolute_url }}">{{ account }}</a>
+          <a href="{{ account.get_absolute_url }}">
+            {{ account.slug }}
+          </a>
         </td>
         <td>{{ account.last_month_balance }}</td>
         <td><strong>{{ account.balance }}</strong></td>
         <td>{{ account.month_balance }}</td>
         <td>{{ account.next_month_balance }}</td>
-        <td>
-          <a href="{{ account.get_absolute_url }}">Operations</a>
+        <td>{{ account.monthly_amount.1 }}</td>
+        <td>{{ account.monthly_amount.3 }}</td>
+        <td>{{ account.monthly_amount.6 }}</td>
+        <td>{{ account.monthly_amount.12 }}</td>
+      </tr>
+    {% endwith %}
+    {% for account in descendants %}
+      <tr>
+        <td style="padding-left: {{ account.level }}0px;">
+          <a href="{{ account.get_absolute_url }}">
+            {{ account.slug }}
+          </a>
         </td>
+        <td>{{ account.last_month_balance }}</td>
+        <td><strong>{{ account.balance }}</strong></td>
+        <td>{{ account.month_balance }}</td>
+        <td>{{ account.next_month_balance }}</td>
+        <td>{{ account.monthly_amount.1 }}</td>
+        <td>{{ account.monthly_amount.3 }}</td>
+        <td>{{ account.monthly_amount.6 }}</td>
+        <td>{{ account.monthly_amount.12 }}</td>
       </tr>
     {% endfor %}
   </table>
-  
+
+  <h2>{% trans "Graph" %}</h2>
+  <table>
+    <tr>
+      {% for month in month_list %}
+        <th>{{ month.title }}</th>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td style="vertical-align:bottom;height:100px;padding-bottom:0;">
+          {% if month.balance >= 0 %}
+            <div style="background:red;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td style="vertical-align:top;height:100px;padding-top:0;">
+          {% if month.balance < 0 %}
+            <div style="background:blue;witdth:100%;height:{{ month.relative_balance }}px;display:block;"></div>
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for month in month_list %}
+        <td>
+          {{ month.balance }}
+        </td>
+      {% endfor %}
+    </tr>
+  </table>
+
   <h2>Operations</h2>
   <table>
     <tr>
@@ -59,10 +104,18 @@
       <th>Account</th>
       <th>Transaction</th>
       <th>Description</th>
-      <th>Amount</th>
+      <th colspan="3">Amount</th>
       <th></th>
     </tr>
+    {% assign name="previous_month" value="" %}{% endassign %}
     {% for operation in operations %}
+      {% assign name="current_month" %}{{ operation.date|date:'Y/m' }}{% endassign %}
+      {% if current_month != previous_month %}
+        <tr>
+          <td colspan="8">{{ current_month }}</td>
+        </tr>
+      {% endif %}
+      {% assign name="previous_month" %}{{ current_month }}{% endassign %}
       <tr>
         <td>{{ operation.date }}</td>
         <td><a href="{{ operation.account.get_absolute_url }}">{{ operation.account }}</a></td>
@@ -77,6 +130,16 @@
         </td>
         <td>{{ operation.description }}</td>
         <td>{{ operation.amount }}</td>
+        <td style="text-align:right;padding-right:0;width:100px;">
+          {% if operation.amount < 0 %}
+            <div style="width:{{ operation.relative_width }}px;height:1em;background-color:blue;display:inline-block;"></div>
+          {% endif %}
+        </td>
+        <td style="text-align:left;padding-left:0;width:100px;">
+          {% if operation.amount > 0 %}
+            <div style="width:{{ operation.relative_width }}px;height:1em;background-color:red;display:inline-block;"></div>
+          {% endif %}
+        </td>
         <td class="actions">
         </td>
       </tr>
