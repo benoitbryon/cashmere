@@ -143,8 +143,11 @@ class AccountDetailView(DetailView):
             if operation.relative_width > max_amount:
                 max_amount = operation.relative_width
         for operation in data['operations']:
-            operation.relative_width = int(
-                operation.relative_width * 100 / max_amount)
+            try:
+                operation.relative_width = int(
+                    operation.relative_width * 100 / max_amount)
+            except ZeroDivisionError:
+                operation.relative_width = 0
             if operation.relative_width == 0 and abs(operation.amount) >= 1:
                 operation.relative_width = 1
         data['import_operations_form'] = forms.ImportOperationsForm(
